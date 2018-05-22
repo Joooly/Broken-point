@@ -1,0 +1,69 @@
+	@RequestMapping("/ww.txt")
+	void download(HttpServletResponse response, HttpServletRequest request) {
+		InputStream in = null;
+		ServletOutputStream out = null;
+		try {
+
+			File f = new File("E:\\MyDownloads\\ww.txt");
+			int size = Integer.parseInt(String.valueOf(f.length()));
+			int startIndex = 0;
+			int endIndex = size - 1;
+			
+			System.out.println("文件总大小：" + size);
+
+			response.setCharacterEncoding("utf-8");
+			response.setContentType("application/x-download");
+			response.setHeader("Accept-Ranges", "bytes");
+			response.setHeader("Content-Disposition", "attachment;fileName=" + "ww.txt");
+
+			if (null != request.getHeader("Range")) {
+				response.setStatus(HttpServletResponse.SC_PARTIAL_CONTENT);
+				try {
+					String[] s = request.getHeader("Range").replaceAll("bytes=", "").split("-");
+
+					startIndex = Integer.parseInt(s[0]);
+					endIndex = Integer.parseInt(s[1]);
+
+					System.out.println("startIndex:" + startIndex + ",endIndex:" + endIndex);
+				} catch (Exception e) {
+					startIndex = 0;
+					endIndex = size - 1;
+					e.printStackTrace();
+				}
+				int to = endIndex - startIndex + 1;
+				response.setHeader("Content-Length", String.valueOf(to));
+			} else {
+				response.setHeader("Content-Length", String.valueOf(size));
+			}
+
+			response.setHeader("Content-Range", new StringBuffer("bytes?").append(startIndex + "").append("-").append(endIndex + "").append("/").append(size + "").toString());
+			out = response.getOutputStream();
+
+			in = new FileInputStream("E:\\MyDownloads\\ww.txt");
+			in.skip(startIndex);
+
+			byte[] buffer = new byte[1024 * 10];
+			int length = 0;
+			while ((length = in.read(buffer, 0, buffer.length)) != -1) {
+				out.write(buffer, 0, length);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			if (null != in) {
+				try {
+					in.close();
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+			if (null != out) {
+				try {
+					out.close();
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+
+			}
+		}
+	}
